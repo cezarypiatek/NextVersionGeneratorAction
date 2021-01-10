@@ -22,7 +22,8 @@ async function run(): Promise<void> {
         stdout: (data: Buffer) => {
           lastTag = data.toString().trim();
         }
-      }
+      },
+      ignoreReturnCode: true
     });
     let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`
 
