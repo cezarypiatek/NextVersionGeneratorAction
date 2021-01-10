@@ -17,8 +17,8 @@ inputs:
     description: 'The environment variable to store the result'
     required: false
 outputs:
-  msbuildPath:
-    nextVersion: 'The next version'
+  nextVersion: 
+    description: 'The next version'
 runs:
   using: 'node12'
   main: 'dist/index.js'
