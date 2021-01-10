@@ -1105,7 +1105,7 @@ function run() {
             else if (shouldBumpUpPatch) {
                 groups.patch++;
             }
-            const nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_ID}`;
+            const nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
             core.setOutput('nextVersion', nextVersion);
             if (OUTPUT_ENV_VARIABLE) {
                 core.exportVariable(OUTPUT_ENV_VARIABLE, nextVersion);
