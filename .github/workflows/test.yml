@@ -10,4 +10,4 @@ jobs:
     - name: Test Publisher
       uses: ./
       with:
-        minor-pattern: '*'
+        minor-pattern: '.*'
