@@ -1056,14 +1056,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const MAJOR_NUMBER_PATTERN = core.getInput('major-pattern');
 const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern');
 const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern');
-const LAST_TAG_PATTERN = (_a = core.getInput('last-tag-pattern')) !== null && _a !== void 0 ? _a : "*";
+const LAST_TAG_PATTERN = core.getInput('last-tag-pattern');
 const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern');
 function run() {
     var _a;
@@ -1071,7 +1070,8 @@ function run() {
         try {
             yield exec.exec("git fetch --prune --unshallow");
             let lastTag = "";
-            yield exec.exec(`git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0`, [], {
+            let gitDescribeCommand = LAST_TAG_PATTERN.length ? `git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0` : `git describe --tags --abbrev=0`;
+            yield exec.exec(gitDescribeCommand, [], {
                 listeners: {
                     stdout: (data) => {
                         lastTag = data.toString().trim();

@@ -4,7 +4,7 @@ import * as exec from '@actions/exec'
 const MAJOR_NUMBER_PATTERN = core.getInput('major-pattern')
 const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern')
 const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern')
-const LAST_TAG_PATTERN = core.getInput('last-tag-pattern') ?? "*"
+const LAST_TAG_PATTERN = core.getInput('last-tag-pattern')
 const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern')
 
 
@@ -12,7 +12,8 @@ async function run(): Promise<void> {
   try {
     await exec.exec("git fetch --prune --unshallow");
     let lastTag = "";
-    await exec.exec(`git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0`, [], {
+    let gitDescribeCommand = LAST_TAG_PATTERN.length ? `git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0`: `git describe --tags --abbrev=0`
+    await exec.exec(gitDescribeCommand , [], {
       listeners: {
         stdout: (data: Buffer) => {
           lastTag = data.toString().trim();
