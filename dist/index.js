@@ -1056,13 +1056,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
 const MAJOR_NUMBER_PATTERN = core.getInput('major-pattern');
 const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern');
 const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern');
-const LAST_TAG_PATTERN = core.getInput('last-tag-pattern');
+const LAST_TAG_PATTERN = (_a = core.getInput('last-tag-pattern')) !== null && _a !== void 0 ? _a : "*";
 const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern');
 function run() {
     var _a;
@@ -1070,7 +1071,7 @@ function run() {
         try {
             yield exec.exec("git fetch --prune --unshallow");
             let lastTag = "";
-            yield exec.exec(`git describe --tags --abbrev=0`, [], {
+            yield exec.exec(`git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0`, [], {
                 listeners: {
                     stdout: (data) => {
                         lastTag = data.toString().trim();
@@ -1078,34 +1079,37 @@ function run() {
                 },
                 ignoreReturnCode: true
             });
-            let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`;
-            let lastCommits = [];
-            yield exec.exec(lastCommitsCommand, [], {
-                listeners: {
-                    stdout: (data) => {
-                        lastCommits.push(data.toString().trim());
-                    }
-                }
-            });
+            let nextVersion = "";
             if (lastTag.length == 0) {
-                lastTag = "1.0.0.0";
+                nextVersion = `1.0.0.${process.env.GITHUB_RUN_NUMBER}`;
             }
-            let versionPattern = /(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+).(?<build>\d+)/;
-            const matches = versionPattern.exec(lastTag);
-            let groups = (_a = matches === null || matches === void 0 ? void 0 : matches.groups) !== null && _a !== void 0 ? _a : { major: 1, minor: 0, patch: 0, build: 0 };
-            var shouldBumpUpMajor = MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MAJOR_NUMBER_PATTERN));
-            var shouldBumpUpMinor = !shouldBumpUpMajor && MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MINOR_NUMBER_PATTERN));
-            var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
-            if (shouldBumpUpMajor) {
-                groups.major++;
+            else {
+                let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`;
+                let lastCommits = [];
+                yield exec.exec(lastCommitsCommand, [], {
+                    listeners: {
+                        stdout: (data) => {
+                            lastCommits.push(data.toString().trim());
+                        }
+                    }
+                });
+                let versionPattern = /(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+).(?<build>\d+)/;
+                const matches = versionPattern.exec(lastTag);
+                let groups = (_a = matches === null || matches === void 0 ? void 0 : matches.groups) !== null && _a !== void 0 ? _a : { major: 1, minor: 0, patch: 0, build: 0 };
+                var shouldBumpUpMajor = MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MAJOR_NUMBER_PATTERN));
+                var shouldBumpUpMinor = !shouldBumpUpMajor && MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MINOR_NUMBER_PATTERN));
+                var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
+                if (shouldBumpUpMajor) {
+                    groups.major++;
+                }
+                else if (shouldBumpUpMinor) {
+                    groups.minor++;
+                }
+                else if (shouldBumpUpPatch) {
+                    groups.patch++;
+                }
+                nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
             }
-            else if (shouldBumpUpMinor) {
-                groups.minor++;
-            }
-            else if (shouldBumpUpPatch) {
-                groups.patch++;
-            }
-            const nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
             core.setOutput('nextVersion', nextVersion);
             if (OUTPUT_ENV_VARIABLE) {
                 core.exportVariable(OUTPUT_ENV_VARIABLE, nextVersion);
