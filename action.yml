@@ -11,7 +11,7 @@ inputs:
     description: 'Regex pattern for detecting patch number bum up'
     required: false
   last-tag-pattern:
-    description: 'Patter for matching last version tag'
+    description: 'Glob pattern for matching last version tag'
     required: false
   output-to-env-variable:
     description: 'The environment variable to store the result'

@@ -39,9 +39,23 @@ async function run(): Promise<void> {
       });
 
 
-      let versionPattern: RegExp = /(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+).(?<build>\d+)/;
+      let versionPattern: RegExp = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?(?:\.(?<build>\d+))?/;
       const matches: any = versionPattern.exec(lastTag);
-      let groups: { major: number, minor: number, patch: number, build: number } = matches?.groups ?? { major: 1, minor: 0, patch: 0, build: 0 }
+      let groups: { major: number, minor: number, patch: number, build: number } = matches?.groups ?? {};
+      if(groups.major == null)
+      {
+        groups.major = 1;
+      }
+      if(groups.minor == null)
+      {
+        groups.minor = 0;  
+      }
+      
+      if(groups.patch == null)
+      {
+        groups.patch = 0;
+      }
+      
       var shouldBumpUpMajor = MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MAJOR_NUMBER_PATTERN));
       var shouldBumpUpMinor = !shouldBumpUpMajor && MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MINOR_NUMBER_PATTERN));
       var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
