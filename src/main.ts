@@ -15,6 +15,7 @@ const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern')
 
 async function run(): Promise<void> {
   try {
+    await exec.exec("git fetch --prune --unshallow");
     let lastTag = "";
     await exec.exec(`git describe --tags --abbrev=0`, [], {
       listeners: {

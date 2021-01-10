@@ -1068,6 +1068,7 @@ function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
+            yield exec.exec("git fetch --prune --unshallow");
             let lastTag = "";
             yield exec.exec(`git describe --tags --abbrev=0`, [], {
                 listeners: {
