@@ -1063,7 +1063,7 @@ const MAJOR_NUMBER_PATTERN = core.getInput('major-pattern');
 const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern');
 const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern');
 const LAST_TAG_PATTERN = core.getInput('last-tag-pattern');
-const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern');
+const OUTPUT_ENV_VARIABLE = core.getInput('output-to-env-variable');
 const PRE_RELEASE_TAG = core.getInput('pre-release-tag');
 function run() {
     var _a;
