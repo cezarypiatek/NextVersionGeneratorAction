@@ -16,6 +16,9 @@ inputs:
   output-to-env-variable:
     description: 'The environment variable to store the result'
     required: false
+  pre-release-tag:
+    description: 'Version suffix for marking pre-release version'
+    required: false
 outputs:
   nextVersion: 
     description: 'The next version'

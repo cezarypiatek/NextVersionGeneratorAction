@@ -1064,6 +1064,7 @@ const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern');
 const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern');
 const LAST_TAG_PATTERN = core.getInput('last-tag-pattern');
 const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern');
+const PRE_RELEASE_TAG = core.getInput('pre-release-tag');
 function run() {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
@@ -1118,6 +1119,9 @@ function run() {
                     groups.patch++;
                 }
                 nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
+            }
+            if (PRE_RELEASE_TAG) {
+                nextVersion += `-${PRE_RELEASE_TAG}`;
             }
             core.setOutput('nextVersion', nextVersion);
             if (OUTPUT_ENV_VARIABLE) {

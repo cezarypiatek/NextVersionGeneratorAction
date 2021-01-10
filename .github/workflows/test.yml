@@ -11,3 +11,4 @@ jobs:
       uses: ./
       with:
         minor-pattern: '.*'
+        pre-release-tag: 'pr'

@@ -6,14 +6,15 @@ const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern')
 const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern')
 const LAST_TAG_PATTERN = core.getInput('last-tag-pattern')
 const OUTPUT_ENV_VARIABLE = core.getInput('last-tag-pattern')
+const PRE_RELEASE_TAG = core.getInput('pre-release-tag')
 
 
 async function run(): Promise<void> {
   try {
     await exec.exec("git fetch --prune --unshallow");
     let lastTag = "";
-    let gitDescribeCommand = LAST_TAG_PATTERN.length ? `git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0`: `git describe --tags --abbrev=0`
-    await exec.exec(gitDescribeCommand , [], {
+    let gitDescribeCommand = LAST_TAG_PATTERN.length ? `git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0` : `git describe --tags --abbrev=0`
+    await exec.exec(gitDescribeCommand, [], {
       listeners: {
         stdout: (data: Buffer) => {
           lastTag = data.toString().trim();
@@ -42,20 +43,17 @@ async function run(): Promise<void> {
       let versionPattern: RegExp = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?(?:\.(?<build>\d+))?/;
       const matches: any = versionPattern.exec(lastTag);
       let groups: { major: number, minor: number, patch: number, build: number } = matches?.groups ?? {};
-      if(groups.major == null)
-      {
+      if (groups.major == null) {
         groups.major = 1;
       }
-      if(groups.minor == null)
-      {
-        groups.minor = 0;  
+      if (groups.minor == null) {
+        groups.minor = 0;
       }
-      
-      if(groups.patch == null)
-      {
+
+      if (groups.patch == null) {
         groups.patch = 0;
       }
-      
+
       var shouldBumpUpMajor = MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MAJOR_NUMBER_PATTERN));
       var shouldBumpUpMinor = !shouldBumpUpMajor && MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MINOR_NUMBER_PATTERN));
       var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
@@ -70,6 +68,11 @@ async function run(): Promise<void> {
       nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
     }
 
+    if(PRE_RELEASE_TAG)
+    {
+      nextVersion+= `-${PRE_RELEASE_TAG}`;
+    }
+    
     core.setOutput('nextVersion', nextVersion)
     if (OUTPUT_ENV_VARIABLE) {
       core.exportVariable(OUTPUT_ENV_VARIABLE, nextVersion);
