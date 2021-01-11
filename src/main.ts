@@ -60,8 +60,11 @@ async function run(): Promise<void> {
 
       if (shouldBumpUpMajor) {
         groups.major++;
+        groups.minor = 0;
+        groups.patch = 0;
       } else if (shouldBumpUpMinor) {
         groups.minor++;
+        groups.patch = 0;
       } else if (shouldBumpUpPatch) {
         groups.patch++;
       }

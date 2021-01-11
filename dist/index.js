@@ -1111,9 +1111,12 @@ function run() {
                 var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
                 if (shouldBumpUpMajor) {
                     groups.major++;
+                    groups.minor = 0;
+                    groups.patch = 0;
                 }
                 else if (shouldBumpUpMinor) {
                     groups.minor++;
+                    groups.patch = 0;
                 }
                 else if (shouldBumpUpPatch) {
                     groups.patch++;
