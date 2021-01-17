@@ -1,19 +1,20 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 
-const MAJOR_NUMBER_PATTERN = core.getInput('major-pattern')
-const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern')
-const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern')
-const LAST_TAG_PATTERN = core.getInput('last-tag-pattern')
-const OUTPUT_ENV_VARIABLE = core.getInput('output-to-env-variable')
-const PRE_RELEASE_TAG = core.getInput('pre-release-tag')
+interface NextVersionGeneratorSettings{
+  readonly MAJOR_NUMBER_PATTERN: string,
+  readonly MINOR_NUMBER_PATTERN : string,
+  readonly PATCH_NUMBER_PATTERN : string,
+  readonly LAST_TAG_PATTERN : string,
+  readonly OUTPUT_ENV_VARIABLE : string,
+  readonly PRE_RELEASE_TAG : string
+}
 
-
-async function run(): Promise<void> {
+async function run(settings : NextVersionGeneratorSettings): Promise<void> {  
   try {
     await exec.exec("git fetch --prune --unshallow");
     let lastTag = "";
-    let gitDescribeCommand = LAST_TAG_PATTERN.length ? `git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0` : `git describe --tags --abbrev=0`
+    let gitDescribeCommand = settings.LAST_TAG_PATTERN.length ? `git describe --match "${settings.LAST_TAG_PATTERN}" --tags --abbrev=0` : `git describe --tags --abbrev=0`
     await exec.exec(gitDescribeCommand, [], {
       listeners: {
         stdout: (data: Buffer) => {
@@ -42,43 +43,33 @@ async function run(): Promise<void> {
 
       let versionPattern: RegExp = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?(?:\.(?<build>\d+))?/;
       const matches: any = versionPattern.exec(lastTag);
-      let groups: { major: number, minor: number, patch: number, build: number } = matches?.groups ?? {};
-      if (groups.major == null) {
-        groups.major = 1;
-      }
-      if (groups.minor == null) {
-        groups.minor = 0;
-      }
-
-      if (groups.patch == null) {
-        groups.patch = 0;
-      }
-
-      var shouldBumpUpMajor = MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MAJOR_NUMBER_PATTERN));
-      var shouldBumpUpMinor = !shouldBumpUpMajor && MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MINOR_NUMBER_PATTERN));
-      var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
+      let { major = 1, minor = 0, patch = 0 } : { major: number, minor: number, patch: number } = matches?.groups ?? {};
+      
+      var shouldBumpUpMajor = settings.MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(settings.MAJOR_NUMBER_PATTERN));
+      var shouldBumpUpMinor = !shouldBumpUpMajor && settings.MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(settings.MINOR_NUMBER_PATTERN));
+      var shouldBumpUpPatch = !shouldBumpUpMinor && settings.PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(settings.PATCH_NUMBER_PATTERN));
 
       if (shouldBumpUpMajor) {
-        groups.major++;
-        groups.minor = 0;
-        groups.patch = 0;
+        major++;
+        minor = 0;
+        patch = 0;
       } else if (shouldBumpUpMinor) {
-        groups.minor++;
-        groups.patch = 0;
+        minor++;
+        patch = 0;
       } else if (shouldBumpUpPatch) {
-        groups.patch++;
+        patch++;
       }
-      nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
+      nextVersion = `${major}.${minor}.${patch}.${process.env.GITHUB_RUN_NUMBER}`;
     }
 
-    if(PRE_RELEASE_TAG)
+    if(settings.PRE_RELEASE_TAG)
     {
-      nextVersion+= `-${PRE_RELEASE_TAG}`;
+      nextVersion+= `-${settings.PRE_RELEASE_TAG}`;
     }
 
     core.setOutput('nextVersion', nextVersion)
-    if (OUTPUT_ENV_VARIABLE) {
-      core.exportVariable(OUTPUT_ENV_VARIABLE, nextVersion);
+    if (settings.OUTPUT_ENV_VARIABLE) {
+      core.exportVariable(settings.OUTPUT_ENV_VARIABLE, nextVersion);
     }
     console.log(`Next version: ${nextVersion}`)
   }
@@ -87,4 +78,12 @@ async function run(): Promise<void> {
   }
 }
 
-run()
+let settings: NextVersionGeneratorSettings = {
+  MAJOR_NUMBER_PATTERN: core.getInput('major-pattern'),
+  MINOR_NUMBER_PATTERN: core.getInput('minor-pattern'),
+  PATCH_NUMBER_PATTERN: core.getInput('patch-pattern'),
+  LAST_TAG_PATTERN: core.getInput('last-tag-pattern'),
+  OUTPUT_ENV_VARIABLE: core.getInput('output-to-env-variable'),
+  PRE_RELEASE_TAG: core.getInput('pre-release-tag')
+}
+run(settings)
