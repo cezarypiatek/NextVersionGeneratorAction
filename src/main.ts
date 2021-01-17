@@ -7,7 +7,6 @@ interface NextVersionGeneratorSettings{
   readonly PATCH_NUMBER_PATTERN : string,
   readonly LAST_TAG_PATTERN : string,
   readonly OUTPUT_ENV_VARIABLE : string,
-  readonly PRE_RELEASE_TAG : string
 }
 
 async function run(settings : NextVersionGeneratorSettings): Promise<void> {  
@@ -26,7 +25,7 @@ async function run(settings : NextVersionGeneratorSettings): Promise<void> {
 
     let nextVersion = ""
     if (lastTag.length == 0) {
-      nextVersion = `1.0.0.${process.env.GITHUB_RUN_NUMBER}`
+      nextVersion = `1.0.0`
     } else {
 
       let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`
@@ -41,7 +40,7 @@ async function run(settings : NextVersionGeneratorSettings): Promise<void> {
       });
 
 
-      let versionPattern: RegExp = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?(?:\.(?<build>\d+))?/;
+      let versionPattern: RegExp = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?/;
       const matches: any = versionPattern.exec(lastTag);
       let { major = 1, minor = 0, patch = 0 } : { major: number, minor: number, patch: number } = matches?.groups ?? {};
       
@@ -59,12 +58,7 @@ async function run(settings : NextVersionGeneratorSettings): Promise<void> {
       } else if (shouldBumpUpPatch) {
         patch++;
       }
-      nextVersion = `${major}.${minor}.${patch}.${process.env.GITHUB_RUN_NUMBER}`;
-    }
-
-    if(settings.PRE_RELEASE_TAG)
-    {
-      nextVersion+= `-${settings.PRE_RELEASE_TAG}`;
+      nextVersion = `${major}.${minor}.${patch}`;
     }
 
     core.setOutput('nextVersion', nextVersion)
@@ -83,7 +77,6 @@ let settings: NextVersionGeneratorSettings = {
   MINOR_NUMBER_PATTERN: core.getInput('minor-pattern'),
   PATCH_NUMBER_PATTERN: core.getInput('patch-pattern'),
   LAST_TAG_PATTERN: core.getInput('last-tag-pattern'),
-  OUTPUT_ENV_VARIABLE: core.getInput('output-to-env-variable'),
-  PRE_RELEASE_TAG: core.getInput('pre-release-tag')
+  OUTPUT_ENV_VARIABLE: core.getInput('output-to-env-variable')
 }
 run(settings)
