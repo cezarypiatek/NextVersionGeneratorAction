@@ -5,7 +5,7 @@ interface NextVersionGeneratorSettings{
   readonly MAJOR_NUMBER_PATTERN: string,
   readonly MINOR_NUMBER_PATTERN : string,
   readonly PATCH_NUMBER_PATTERN : string,
-  readonly LAST_TAG_PATTERN : string,
+  readonly VERSION_TAG_PREFIX : string,
   readonly OUTPUT_ENV_VARIABLE : string,
 }
 
@@ -13,7 +13,7 @@ async function run(settings : NextVersionGeneratorSettings): Promise<void> {
   try {
     await exec.exec("git fetch --prune --unshallow");
     let lastTag = "";
-    let gitDescribeCommand = settings.LAST_TAG_PATTERN.length ? `git describe --match "${settings.LAST_TAG_PATTERN}" --tags --abbrev=0` : `git describe --tags --abbrev=0`
+    let gitDescribeCommand = settings.VERSION_TAG_PREFIX.length ? `git describe --match "${settings.VERSION_TAG_PREFIX}*" --tags --abbrev=0` : `git describe --tags --abbrev=0`
     await exec.exec(gitDescribeCommand, [], {
       listeners: {
         stdout: (data: Buffer) => {
@@ -28,7 +28,7 @@ async function run(settings : NextVersionGeneratorSettings): Promise<void> {
       nextVersion = `1.0.0`
     } else {
 
-      let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`
+      let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${settings.VERSION_TAG_PREFIX}${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`
 
       let lastCommits: Array<string> = [];
       await exec.exec(lastCommitsCommand, [], {
@@ -76,7 +76,7 @@ let settings: NextVersionGeneratorSettings = {
   MAJOR_NUMBER_PATTERN: core.getInput('major-pattern'),
   MINOR_NUMBER_PATTERN: core.getInput('minor-pattern'),
   PATCH_NUMBER_PATTERN: core.getInput('patch-pattern'),
-  LAST_TAG_PATTERN: core.getInput('last-tag-pattern'),
+  VERSION_TAG_PREFIX: core.getInput('version-tag-prefix'),
   OUTPUT_ENV_VARIABLE: core.getInput('output-to-env-variable')
 }
 run(settings)

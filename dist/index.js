@@ -1059,19 +1059,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const exec = __importStar(__webpack_require__(986));
-const MAJOR_NUMBER_PATTERN = core.getInput('major-pattern');
-const MINOR_NUMBER_PATTERN = core.getInput('minor-pattern');
-const PATCH_NUMBER_PATTERN = core.getInput('patch-pattern');
-const LAST_TAG_PATTERN = core.getInput('last-tag-pattern');
-const OUTPUT_ENV_VARIABLE = core.getInput('output-to-env-variable');
-const PRE_RELEASE_TAG = core.getInput('pre-release-tag');
-function run() {
+function run(settings) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield exec.exec("git fetch --prune --unshallow");
             let lastTag = "";
-            let gitDescribeCommand = LAST_TAG_PATTERN.length ? `git describe --match "${LAST_TAG_PATTERN}" --tags --abbrev=0` : `git describe --tags --abbrev=0`;
+            let gitDescribeCommand = settings.VERSION_TAG_PREFIX.length ? `git describe --match "${settings.VERSION_TAG_PREFIX}*" --tags --abbrev=0` : `git describe --tags --abbrev=0`;
             yield exec.exec(gitDescribeCommand, [], {
                 listeners: {
                     stdout: (data) => {
@@ -1082,10 +1076,10 @@ function run() {
             });
             let nextVersion = "";
             if (lastTag.length == 0) {
-                nextVersion = `1.0.0.${process.env.GITHUB_RUN_NUMBER}`;
+                nextVersion = `1.0.0`;
             }
             else {
-                let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`;
+                let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${settings.VERSION_TAG_PREFIX}${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`;
                 let lastCommits = [];
                 yield exec.exec(lastCommitsCommand, [], {
                     listeners: {
@@ -1094,41 +1088,29 @@ function run() {
                         }
                     }
                 });
-                let versionPattern = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?(?:\.(?<build>\d+))?/;
+                let versionPattern = /(?<major>\d+)(?:\.(?<minor>\d+))?(?:\.(?<patch>\d+))?/;
                 const matches = versionPattern.exec(lastTag);
-                let groups = (_a = matches === null || matches === void 0 ? void 0 : matches.groups) !== null && _a !== void 0 ? _a : {};
-                if (groups.major == null) {
-                    groups.major = 1;
-                }
-                if (groups.minor == null) {
-                    groups.minor = 0;
-                }
-                if (groups.patch == null) {
-                    groups.patch = 0;
-                }
-                var shouldBumpUpMajor = MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MAJOR_NUMBER_PATTERN));
-                var shouldBumpUpMinor = !shouldBumpUpMajor && MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(MINOR_NUMBER_PATTERN));
-                var shouldBumpUpPatch = !shouldBumpUpMinor && PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(PATCH_NUMBER_PATTERN));
+                let { major = 1, minor = 0, patch = 0 } = (_a = matches === null || matches === void 0 ? void 0 : matches.groups) !== null && _a !== void 0 ? _a : {};
+                var shouldBumpUpMajor = settings.MAJOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(settings.MAJOR_NUMBER_PATTERN));
+                var shouldBumpUpMinor = !shouldBumpUpMajor && settings.MINOR_NUMBER_PATTERN && lastCommits.some((line) => line.match(settings.MINOR_NUMBER_PATTERN));
+                var shouldBumpUpPatch = !shouldBumpUpMinor && settings.PATCH_NUMBER_PATTERN && lastCommits.some((line) => line.match(settings.PATCH_NUMBER_PATTERN));
                 if (shouldBumpUpMajor) {
-                    groups.major++;
-                    groups.minor = 0;
-                    groups.patch = 0;
+                    major++;
+                    minor = 0;
+                    patch = 0;
                 }
                 else if (shouldBumpUpMinor) {
-                    groups.minor++;
-                    groups.patch = 0;
+                    minor++;
+                    patch = 0;
                 }
                 else if (shouldBumpUpPatch) {
-                    groups.patch++;
+                    patch++;
                 }
-                nextVersion = `${groups.major}.${groups.minor}.${groups.patch}.${process.env.GITHUB_RUN_NUMBER}`;
-            }
-            if (PRE_RELEASE_TAG) {
-                nextVersion += `-${PRE_RELEASE_TAG}`;
+                nextVersion = `${major}.${minor}.${patch}`;
             }
             core.setOutput('nextVersion', nextVersion);
-            if (OUTPUT_ENV_VARIABLE) {
-                core.exportVariable(OUTPUT_ENV_VARIABLE, nextVersion);
+            if (settings.OUTPUT_ENV_VARIABLE) {
+                core.exportVariable(settings.OUTPUT_ENV_VARIABLE, nextVersion);
             }
             console.log(`Next version: ${nextVersion}`);
         }
@@ -1137,7 +1119,14 @@ function run() {
         }
     });
 }
-run();
+let settings = {
+    MAJOR_NUMBER_PATTERN: core.getInput('major-pattern'),
+    MINOR_NUMBER_PATTERN: core.getInput('minor-pattern'),
+    PATCH_NUMBER_PATTERN: core.getInput('patch-pattern'),
+    VERSION_TAG_PREFIX: core.getInput('version-tag-prefix'),
+    OUTPUT_ENV_VARIABLE: core.getInput('output-to-env-variable')
+};
+run(settings);
 
 
 /***/ }),

@@ -10,5 +10,7 @@ jobs:
     - name: Test Publisher
       uses: ./
       with:
+        major-pattern: 'BREAKING CHANGES:'
+        minor-pattern: 'Feature:'
         minor-pattern: '.*'
-        pre-release-tag: 'pr'
+        output-to-env-variable: 'VersionPrefix'
