@@ -28,7 +28,7 @@ async function run(settings : NextVersionGeneratorSettings): Promise<void> {
       nextVersion = `1.0.0`
     } else {
 
-      let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${settings.VERSION_TAG_PREFIX}${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`
+      let lastCommitsCommand = lastTag.length > 0 ? `git --no-pager log "${lastTag}..HEAD" --pretty=format:"%s"` : `git --no-pager log --pretty=format:"%s"`
 
       let lastCommits: Array<string> = [];
       await exec.exec(lastCommitsCommand, [], {
